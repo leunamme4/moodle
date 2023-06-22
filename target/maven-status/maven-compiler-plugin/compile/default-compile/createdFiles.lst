@@ -1,0 +1,8 @@
+com\moodle\shared\FieldVerifier.class
+com\moodle\client\GreetingService.class
+com\moodle\server\GreetingServiceImpl.class
+com\moodle\client\app.class
+com\moodle\client\app$1.class
+com\moodle\client\GreetingServiceAsync.class
+com\moodle\client\app$1MyHandler$1.class
+com\moodle\client\app$1MyHandler.class

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module version="4">
+  <component name="FacetManager">
+    <facet type="gwt" name="GWT">
+      <configuration>
+        <setting name="compilerParameters" value="-failOnError -sourceLevel 1.8" />
+        <setting name="gwtSdkUrl" value="file://$MAVEN_REPOSITORY$/org/gwtproject/gwt-dev/2.10.0/" />
+        <setting name="gwtSdkType" value="maven" />
+        <setting name="webFacet" value="Web" />
+        <packaging>
+          <module name="com.moodle.appJUnit" enabled="false" />
+          <module name="com.sunrise.appJUnit" enabled="false" />
+        </packaging>
+      </configuration>
+    </facet>
+  </component>
+</module>

@@ -1,0 +1,14 @@
+{
+    "name": "Moodle app",
+    "description": "Moodle test to docx",
+    "version": "1.0",
+    "manifest_version": 3,
+    "icons": {
+       "128": "128.png"
+     },
+    "action": {
+        "default_popup":"src/main/webapp/app.html"
+    },
+    "permissions": [],
+    "background":{}
+}
