@@ -1,2 +1,0 @@
-serviceClass: com.moodle.client.GreetingService
-path: 58D6765786025C843CFF1C631B63D241.gwt.rpc

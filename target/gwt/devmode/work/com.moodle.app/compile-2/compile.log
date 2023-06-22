@@ -1,9 +1,0 @@
-binding: user.agent=safari
-Compiling module com.moodle.app
-   Unification traversed 20938 fields and methods and 2002 types. 1970 are considered part of the current module and 1970 had all of their fields and methods traversed.
-   Compiling 1 permutation
-      Compiling permutation 0...
-      Linking per-type JS with 1949 new/changed types.
-      Source Maps Enabled
-   Compile of permutations succeeded
-   Compilation succeeded -- 12,028s
