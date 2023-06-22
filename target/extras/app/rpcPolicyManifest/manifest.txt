@@ -1,3 +1,0 @@
-# Module app
-# RPC service class, partial path of RPC policy file
-com.moodle.client.GreetingService, 58D6765786025C843CFF1C631B63D241.gwt.rpc
