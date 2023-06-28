@@ -4,7 +4,7 @@ import com.google.gwt.user.client.ui.*;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.moodle.parser.XMLParser;
+import com.moodle.parser.XMLConvertor;
 
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
@@ -27,8 +27,8 @@ public class app implements EntryPoint {
 
     convertButton.addClickHandler(new ClickHandler() {
       public void onClick(ClickEvent event) {
-        // Чето с ним не билдится с этой строчкой В(
-       // XMLParser.collectXMLData(PATH);
+        // Не падает, но DomException ловит В(((((( ЗА ШО?
+         XMLConvertor.collectXMLData(PATH);
       }
     });
 
