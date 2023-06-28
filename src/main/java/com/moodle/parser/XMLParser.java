@@ -94,7 +94,7 @@ public class XMLParser {
         } catch (IOException | SAXException e) {
             throw new RuntimeException(e);
         }
-       // System.out.println(questionsInfo);
+        System.out.println(questionsInfo);
     }
 
     /**
@@ -105,34 +105,33 @@ public class XMLParser {
      * @return Map<String, ArrayList<String>> - Нормализованные (формулировка, список ответов).
      */
     public static Map<String, ArrayList<String>> normalizeXMLData(String questionType, ArrayList<String> answers, String questionText) {
-        Map<String, ArrayList<String>> normalizedAnswers = new HashMap<>(){};
+        Map<String, ArrayList<String>> normalizedAnswers = new HashMap<String, ArrayList<String>>(){};
         String newQuestionText = questionText.replaceAll("<[^>]*>", "").trim(); //тупо все теги убирает, это тупо, но я пока ничего лучше не придумал В(
         ArrayList<String> newAnswers = new ArrayList<>();
         StringBuilder answer = new StringBuilder();
 
-       // System.out.println(newQuestionText);
+        System.out.println(newQuestionText);
 
         if (!Objects.equals(questionType, "essay")) {
             for (int i = 0; i < answers.toArray().length; i++) {
 
                 String currentAnswer = answers.toArray()[i].toString().replaceAll("<[^>]*>", "").trim();
-                List<String> splitted = List.of(currentAnswer.split("\n"));
-                for (int j = 0; j < splitted.size(); j++) {
-                    currentAnswer = splitted.get(j).trim();
+                String[] splitted = (currentAnswer.split("\n"));
+                for (int j = 0; j < splitted.length; j++) {
+                    currentAnswer = splitted[j].trim();
                     if (!currentAnswer.equals("")) {
-                        switch (questionType) {
-                            case ("multichoice"), ("shortanswer"), ("multichoiceset") -> { //Множественный выбор, короткий ответ,
+                            if (Objects.equals(questionType, "multichoice") || Objects.equals(questionType,"shortanswer") ||  Objects.equals(questionType,"multichoiceset")) { //Множественный выбор, короткий ответ,
                                 if (j == 0) {
                                     answer = new StringBuilder(currentAnswer);
                                 }
                                 if (j == 2) {
                                     answer.append(" (Комментарий к вопросу при просмотре результата): ").append(currentAnswer);
                                 }
-                                if (j == splitted.size() - 1 && splitted.get(splitted.size() - 1).trim().equals("true") && !questionType.equals("shortanswer")) {
+                                if (j == splitted.length - 1 && splitted[splitted.length - 1].trim().equals("true") && !questionType.equals("shortanswer")) {
                                     answer.append(" true");
                                 }
                             }
-                            case ("numerical") -> { //Числовой
+                            if (Objects.equals(questionType,"numerical")) { //Числовой
                                 if (j == 0) {
                                     answer = new StringBuilder(currentAnswer);
                                 }
@@ -143,7 +142,7 @@ public class XMLParser {
                                     answer.append(" Допустимая погрешность = +-").append(currentAnswer);
                                 }
                             }
-                            case ("ddwtos"), ("gapselect") -> { //Перетаскивание в текст и выбор пропущенных слов
+                            if  (Objects.equals(questionType,"ddwtos") || Objects.equals(questionType,"gapselect")) { //Перетаскивание в текст и выбор пропущенных слов
                                 if (j == 0) {
                                     answer = new StringBuilder(currentAnswer);
                                 }
@@ -151,10 +150,9 @@ public class XMLParser {
                                     answer.append(" (Группа ответа): ").append(currentAnswer);
                                 }
                             }
-                        }
                     }
                 }
-              //  System.out.println(answer);
+                System.out.println(answer);
                 newAnswers.add(answer.toString());
                 normalizedAnswers.put(newQuestionText, newAnswers);
             }
