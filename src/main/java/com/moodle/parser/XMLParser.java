@@ -11,20 +11,17 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 public class XMLParser {
-    private static final String PATH = "src/main/resources/moodleXML/example-1.xml";
 
-    /** Все-таки это дольше, чем я думал **/
-
-    //Собирает в questionsInfo инфу про вопрос с ответами в плохом формате
+    /** Собирает в questionsInfo инфу про вопрос в формате List<Map<String, Map<String, ArrayList<String>>>>
+     * (Тип вопроса (Формулирова, Список ответов (где правильные отметка (-true)))
+     * @param inputXMLFile - входной файл moodleXML
+     */
     public static void collectXMLData(String inputXMLFile) {
 
-        List<Map<String, Map<ArrayList<String>, ArrayList<String>>>> questionsInfo = new ArrayList<>(); // <Тип вопроса, <Формулировка, ответы>>
+        List<Map<String, Map<String, ArrayList<String>>>> questionsInfo = new ArrayList<>(); // <Тип вопроса, <Формулировка, ответы>>
 
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         try {
@@ -43,7 +40,7 @@ public class XMLParser {
 
                     Element questionElement = (Element) question;
                     String questionType = questionElement.getAttribute("type");
-                    ArrayList<String> questionText = new ArrayList<>(List.of());
+                    String questionText = "";
                     ArrayList<String> answers = new ArrayList<>(List.of());
 
                     NodeList questionDetails = question.getChildNodes();
@@ -55,20 +52,37 @@ public class XMLParser {
 
                             if (Objects.equals(detailElement.getTagName(), "questiontext")) {
                                 if (detailElement.getTextContent() != null) {
-                                    questionText.add(detailElement.getTextContent());
+                                    questionText = detailElement.getTextContent();
                                 }
                             }
 
+                            /* Правильные ответы выделяю для мультивыбора и вставить пропущенное слово, остальное
+                            пока не пониманию точно, как должно выглядеть в DOCX и как выделить их тоже ососбо пока не разобрался,
+                             особенно с перетаскиванием это КРИНЖ.
+                            */
                             if (Objects.equals(detailElement.getTagName(), "answer")) {
+                                if (detailElement.getTextContent() != null) {
+                                    String isCorrect = String.valueOf((!detailElement.getAttribute("fraction").equals("0")));
+                                    if (isCorrect.equals("true")) {
+                                        answers.add(detailElement.getTextContent() + isCorrect);
+                                    } else {
+                                        answers.add(detailElement.getTextContent());
+                                    }
+                                }
+                            }
+                            if (Objects.equals(detailElement.getTagName(), "dragbox")) {
+                                if (detailElement.getTextContent() != null) {
+                                    answers.add(detailElement.getTextContent());
+                                }
+                            }
+                            if (Objects.equals(detailElement.getTagName(), "selectoption")) {
                                 if (detailElement.getTextContent() != null) {
                                     answers.add(detailElement.getTextContent());
                                 }
                             }
                         }
                     }
-                    answers = normalizeXMLData(questionType, answers);
-                    // System.out.println(answers);
-                    Map<String, Map<ArrayList<String>, ArrayList<String>>> questions =Map.of(questionType, Map.of(questionText, answers));
+                    Map<String, Map<String, ArrayList<String>>> questions = Map.of(questionType, normalizeXMLData(questionType, answers, questionText));
                     questionsInfo.add(questions);
                 }
             }
@@ -80,101 +94,74 @@ public class XMLParser {
         } catch (IOException | SAXException e) {
             throw new RuntimeException(e);
         }
-        System.out.println(questionsInfo);
-        /**
-         ** Выдает:
-         *
-         * [{category={[]=[]}}, {ddwtos={[
-         *       <p><span>Текст вопроса: [[1]], [[2]], [[3]], [[4]], [[5]], [[6]]</span></p>
-         *     ]=[]}}, {essay={[
-         *       Что такое хорошо и что такое плохо?
-         *     ]=[]}}, {multichoice={[
-         *       Устинов _____ Михайлович.
-         *     ]=[Олег, Сергей, Андрей]}}, {multichoice={[
-         *       Уберите лишний (лишние)
-         *     ]=[Москва (Комментарий к вопросу при просмотре результата): Столица России, Пекин (Комментарий к вопросу при просмотре результата): Столица Китая, Дакка (Комментарий к вопросу при просмотре результата): Столица Бангладеш, Джакарта (Комментарий к вопросу при просмотре результата): Столица Индонезии, Сидней (Комментарий к вопросу при просмотре результата): Правильно, Пермь (Комментарий к вопросу при просмотре результата): Правильно]}}, {multichoiceset={[
-         *       <p>Текст вопроса</p>
-         *     ]=[
-         *       <p><span>Вариант ответа 1</span></p>
-         *
-         *
-         *
-         *     ,
-         *       <p><span>Вариант ответа 2</span></p>
-         *
-         *
-         *
-         *     ,
-         *       <p><span>Вариант ответа 3</span></p>
-         *
-         *
-         *
-         *     ,
-         *       <p><span>Вариант ответа 4</span></p>
-         *
-         *
-         *
-         *     ,
-         *       <p><span>Вариант ответа 5</span></p>
-         *
-         *
-         *
-         *     ]}}, {numerical={[
-         *       Число Пи (4 цифры после запятой)
-         *     ]=[
-         *       3.1415
-         *
-         *
-         *
-         *       0.0005
-         *     ]}}, {shortanswer={[
-         *       Сколько дней в году?
-         *     ]=[
-         *       365
-         *
-         *
-         *
-         *     ,
-         *       366
-         *
-         *
-         *
-         *     ]}}]
-         **/
-
-
+       // System.out.println(questionsInfo);
     }
-    //нормализует ответы
-    public static ArrayList<String> normalizeXMLData(String questionType, ArrayList<String> answers) {
-        ArrayList<String> normalizedAnswers = new ArrayList<>();
-        String answer = "";
-        switch (questionType) {
-            // Только мультивыбор пока только нормализовал B)
-            case "multichoice":
-                for (int i = 0; i < answers.toArray().length; i++) {
-                    String currentAnswer = answers.toArray()[i].toString().trim();
-                    List<String> splitted = List.of(currentAnswer.split("\n"));
-                    for (int j = 0; j < splitted.size(); j ++) {
-                        currentAnswer = splitted.get(j).trim();
-                        if (!currentAnswer.equals("")) {
-                            if (j == 0) {
-                                answer = currentAnswer;
+
+    /**
+     * Нормализует ответы
+     * @param questionType - тип вопроса
+     * @param answers - ответы
+     * @param questionText - формулировка
+     * @return Map<String, ArrayList<String>> - Нормализованные (формулировка, список ответов).
+     */
+    public static Map<String, ArrayList<String>> normalizeXMLData(String questionType, ArrayList<String> answers, String questionText) {
+        Map<String, ArrayList<String>> normalizedAnswers = new HashMap<>(){};
+        String newQuestionText = questionText.replaceAll("<[^>]*>", "").trim(); //тупо все теги убирает, это тупо, но я пока ничего лучше не придумал В(
+        ArrayList<String> newAnswers = new ArrayList<>();
+        StringBuilder answer = new StringBuilder();
+
+       // System.out.println(newQuestionText);
+
+        if (!Objects.equals(questionType, "essay")) {
+            for (int i = 0; i < answers.toArray().length; i++) {
+
+                String currentAnswer = answers.toArray()[i].toString().replaceAll("<[^>]*>", "").trim();
+                List<String> splitted = List.of(currentAnswer.split("\n"));
+                for (int j = 0; j < splitted.size(); j++) {
+                    currentAnswer = splitted.get(j).trim();
+                    if (!currentAnswer.equals("")) {
+                        switch (questionType) {
+                            case ("multichoice"), ("shortanswer"), ("multichoiceset") -> { //Множественный выбор, короткий ответ,
+                                if (j == 0) {
+                                    answer = new StringBuilder(currentAnswer);
+                                }
+                                if (j == 2) {
+                                    answer.append(" (Комментарий к вопросу при просмотре результата): ").append(currentAnswer);
+                                }
+                                if (j == splitted.size() - 1 && splitted.get(splitted.size() - 1).trim().equals("true") && !questionType.equals("shortanswer")) {
+                                    answer.append(" true");
+                                }
                             }
-                            if (j == 2) {
-                                answer += " (Комментарий к вопросу при просмотре результата): " + currentAnswer;
+                            case ("numerical") -> { //Числовой
+                                if (j == 0) {
+                                    answer = new StringBuilder(currentAnswer);
+                                }
+                                if (j == 2) {
+                                    answer.append(" (Комментарий к вопросу при просмотре результата): ").append(currentAnswer);
+                                }
+                                if (j == 4) {
+                                    answer.append(" Допустимая погрешность = +-").append(currentAnswer);
+                                }
+                            }
+                            case ("ddwtos"), ("gapselect") -> { //Перетаскивание в текст и выбор пропущенных слов
+                                if (j == 0) {
+                                    answer = new StringBuilder(currentAnswer);
+                                }
+                                if (j == 1) {
+                                    answer.append(" (Группа ответа): ").append(currentAnswer);
+                                }
                             }
                         }
                     }
-                    normalizedAnswers.add(answer);
                 }
-                return normalizedAnswers;
-
-            case "asd":
-                break;
-            default:
-                break;
+              //  System.out.println(answer);
+                newAnswers.add(answer.toString());
+                normalizedAnswers.put(newQuestionText, newAnswers);
+            }
+        } else {
+            normalizedAnswers.put(newQuestionText, answers);
         }
-        return answers;
+        return normalizedAnswers;
     }
-
 }
+
