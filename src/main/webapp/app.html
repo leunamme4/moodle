@@ -1,15 +1,21 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <link rel="stylesheet" href="app.css">
+    <script type="text/javascript" src="app/app.nocache.js"></script>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <link type="text/css" rel="stylesheet" href="app.css">
     <title>Загрузка файлов</title>
+    <link rel="manifest" href="manifest.json"/>
 </head>
 <body>
-    <input class="input-file" type="file" id="fileInput" title="Перетащите"/>
-    <div>
-        <button class="convert">Конвертировать</button>
-    </div>
+    <table>
+        <tr>
+            <td id="inputFileContainer"></td>
+        </tr>
+        <tr>
+            <td id="convertContainer" align="center"></td>
+        </tr>
+    </table>
 </body>
 <!--Нужно еще скрипт написать, который записывает файл в папку moodleXML-->
 </html>
