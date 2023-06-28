@@ -4,15 +4,21 @@ import com.google.gwt.user.client.ui.*;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.moodle.parser.XMLParser;
 
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
  */
+
+
 public class app implements EntryPoint {
   /**
    * This is the entry point method.
    */
+
+  private static final String PATH = "src/main/resources/moodleXML/example-1.xml";
   public void onModuleLoad() {
+
     final FileUpload uploadFile = new FileUpload();
     final Button convertButton = new Button("Конвертировать");
 
@@ -21,7 +27,8 @@ public class app implements EntryPoint {
 
     convertButton.addClickHandler(new ClickHandler() {
       public void onClick(ClickEvent event) {
-        // handle the click event
+        // Чето с ним не билдится с этой строчкой В(
+       // XMLParser.collectXMLData(PATH);
       }
     });
 
