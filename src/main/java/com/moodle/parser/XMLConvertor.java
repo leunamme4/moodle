@@ -1,10 +1,20 @@
 package com.moodle.parser;
 
-import com.google.gwt.user.client.Window;
-import com.google.gwt.xml.client.*;
-import java.util.*;
+import com.google.gwt.xml.client.Document;
+import com.google.gwt.xml.client.Element;
+import com.google.gwt.xml.client.Node;
+import com.google.gwt.xml.client.NodeList;
+import org.xml.sax.SAXException;
 
-public class XMLConvertor {
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
+//import org.vectomatic.file.File;
+
+public class XMLParser {
 
     /** Собирает в questionsInfo инфу про вопрос в формате List<Map<String, Map<String, ArrayList<String>>>>
      * (Тип вопроса (Формулирова, Список ответов (где правильные отметка (-true)))
@@ -14,9 +24,12 @@ public class XMLConvertor {
 
         List<Map<String, Map<String, ArrayList<String>>>> questionsInfo = new ArrayList<>(); // <Тип вопроса, <Формулировка, ответы>>
 
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         try {
-            // где-то тут барагоз жоский
-            Document document = XMLParser.parse(inputXMLFile); //  уверен, что прямо сразу где-то здесь
+            DocumentBuilder builder = factory.newDocumentBuilder();
+
+            Document document = (Document) builder.parse(new File(inputXMLFile));
+
             document.getDocumentElement().normalize();
 
             NodeList questionList = document.getElementsByTagName("question");
@@ -71,14 +84,16 @@ public class XMLConvertor {
                         }
                     }
                     Map<String, Map<String, ArrayList<String>>> questions = new HashMap<>();
-                    questions.put(questionType, normalizeXMLData(questionType, answers, questionText));
+                    questions.put(questionType,normalizeXMLData(questionType, answers, questionText));
                     questionsInfo.add(questions);
                 }
             }
 
-        } catch (DOMException e) {
-            Window.alert("Could not parse XML document.");
+        } catch (ParserConfigurationException e) {
             e.printStackTrace();
+            throw new RuntimeException(e);
+
+        } catch (IOException | SAXException e) {
             throw new RuntimeException(e);
         }
         System.out.println(questionsInfo);

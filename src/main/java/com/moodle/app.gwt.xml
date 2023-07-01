@@ -7,7 +7,10 @@
   "http://gwtproject.org/doctype/2.10.0/gwt-module.dtd">
 <module rename-to='app'>
   <!-- Inherit the core Web Toolkit stuff.                        -->
-  <inherits name='com.google.gwt.user.User'/>
+  <inherits name='com.google.gwt.user.User' />
+  <inherits name='com.google.gwt.dom.DOM' />
+  <inherits name='com.google.gwt.xml.XML' />
+  <inherits name="com.google.gwt.http.HTTP" />
 
   <!-- Inherit the default GWT style sheet.  You can change       -->
   <!-- the theme of your GWT application by uncommenting          -->
@@ -19,14 +22,13 @@
   <!-- <inherits name='com.google.gwt.user.theme.dark.Dark'/>     -->
 
   <!-- Other module inherits                                      -->
-
+  <inherits name="com.google.gwt.xml.XML"/>
+  <inherits name="org.vectomatic.libgwtfile"/>
   <!-- Specify the app entry point class.                         -->
   <entry-point class='com.moodle.client.app'/>
 
   <!-- Specify the paths for translatable code                    -->
   <source path='client'/>
-  <source path='parser'/>
-
 
   <!-- allow Super Dev Mode -->
   <add-linker name="xsiframe"/>
