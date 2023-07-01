@@ -1,9 +1,9 @@
 package com.moodle.parser;
 
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
+import com.google.gwt.xml.client.Document;
+import com.google.gwt.xml.client.Element;
+import com.google.gwt.xml.client.Node;
+import com.google.gwt.xml.client.NodeList;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -12,6 +12,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+//import org.vectomatic.file.File;
 
 public class XMLParser {
 
@@ -27,7 +28,7 @@ public class XMLParser {
         try {
             DocumentBuilder builder = factory.newDocumentBuilder();
 
-            Document document = builder.parse(new File(inputXMLFile));
+            Document document = (Document) builder.parse(new File(inputXMLFile));
 
             document.getDocumentElement().normalize();
 
@@ -41,7 +42,7 @@ public class XMLParser {
                     Element questionElement = (Element) question;
                     String questionType = questionElement.getAttribute("type");
                     String questionText = "";
-                    ArrayList<String> answers = new ArrayList<>(List.of());
+                    ArrayList<String> answers = new ArrayList<>();
 
                     NodeList questionDetails = question.getChildNodes();
                     for (int j = 0; j < questionDetails.getLength(); j++) {
@@ -51,8 +52,8 @@ public class XMLParser {
                             Element detailElement = (Element) detail;
 
                             if (Objects.equals(detailElement.getTagName(), "questiontext")) {
-                                if (detailElement.getTextContent() != null) {
-                                    questionText = detailElement.getTextContent();
+                                if (detailElement.getNodeValue() != null) {
+                                    questionText = detailElement.getNodeValue();
                                 }
                             }
 
@@ -61,28 +62,29 @@ public class XMLParser {
                              особенно с перетаскиванием это КРИНЖ.
                             */
                             if (Objects.equals(detailElement.getTagName(), "answer")) {
-                                if (detailElement.getTextContent() != null) {
+                                if (detailElement.getNodeValue() != null) {
                                     String isCorrect = String.valueOf((!detailElement.getAttribute("fraction").equals("0")));
                                     if (isCorrect.equals("true")) {
-                                        answers.add(detailElement.getTextContent() + isCorrect);
+                                        answers.add(detailElement.getNodeValue() + isCorrect);
                                     } else {
-                                        answers.add(detailElement.getTextContent());
+                                        answers.add(detailElement.getNodeValue());
                                     }
                                 }
                             }
                             if (Objects.equals(detailElement.getTagName(), "dragbox")) {
-                                if (detailElement.getTextContent() != null) {
-                                    answers.add(detailElement.getTextContent());
+                                if (detailElement.getNodeValue() != null) {
+                                    answers.add(detailElement.getNodeValue());
                                 }
                             }
                             if (Objects.equals(detailElement.getTagName(), "selectoption")) {
-                                if (detailElement.getTextContent() != null) {
-                                    answers.add(detailElement.getTextContent());
+                                if (detailElement.getNodeValue() != null) {
+                                    answers.add(detailElement.getNodeValue());
                                 }
                             }
                         }
                     }
-                    Map<String, Map<String, ArrayList<String>>> questions = Map.of(questionType, normalizeXMLData(questionType, answers, questionText));
+                    Map<String, Map<String, ArrayList<String>>> questions = new HashMap<>();
+                    questions.put(questionType,normalizeXMLData(questionType, answers, questionText));
                     questionsInfo.add(questions);
                 }
             }
