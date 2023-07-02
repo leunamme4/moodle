@@ -4,8 +4,9 @@
              xmlns:f='urn:import:org.vectomatic.file'>
     <ui:with field='bundle' type='com.moodle.client.app.AppBundle' />
     <g:FlowPanel>
-        <g:Label>Click the browse button to select local SVG, bitmap (png, gif, jpg) or text files to load</g:Label>
+        <g:Label>Выберете файл формата MoodleXML для конвертации</g:Label>
         <f:FileUploadExt ui:field="fileUpload" />
+        <g:Label>Нажмите, чтобы получить файл формата docx</g:Label>
         <g:Button text="Конвертировать" ui:field="convertBtn" />
         <g:FlowPanel ui:field="imagePanel"  styleName="{bundle.css.imagePanel}" />
     </g:FlowPanel>

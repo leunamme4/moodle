@@ -169,14 +169,7 @@ public class app implements EntryPoint {
             reader.readAsBinaryString(file);
           }
         } else if (type.startsWith("text/")) {
-          // If the file is larger than 1kb, read only the first 1000 characters
-          // to demonstrate file slicing
-          Blob blob = file;
-          if (file.getSize() > 0) {
-            blob = file.slice(0, 1000, "text/plain; charset=utf-8");
-          }
-
-          reader.readAsText(blob);
+          reader.readAsText(file);
         }
       } catch(Throwable t) {
         // Necessary for FF (see bug https://bugzilla.mozilla.org/show_bug.cgi?id=701154)
@@ -186,14 +179,6 @@ public class app implements EntryPoint {
         readNextFile();
       }
     }
-  }
-
-  private FlowPanel createText(final File file) {
-    String result = reader.getStringResult();
-    FlowPanel panel = new FlowPanel();
-    panel.getElement().appendChild(Document.get().createTextNode(result));
-    panel.addStyleName(bundle.css().text());
-    return panel;
   }
 
   @UiHandler("convertBtn")
