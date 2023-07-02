@@ -1,34 +1,25 @@
 package com.moodle.parser;
 
-import com.google.gwt.xml.client.Document;
-import com.google.gwt.xml.client.Element;
-import com.google.gwt.xml.client.Node;
-import com.google.gwt.xml.client.NodeList;
-import org.xml.sax.SAXException;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.xml.client.*;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import java.io.File;
-import java.io.IOException;
 import java.util.*;
-//import org.vectomatic.file.File;
 
-public class XMLParser {
+public class XMLConvertor {
 
-    /** Собирает в questionsInfo инфу про вопрос в формате List<Map<String, Map<String, ArrayList<String>>>>
+    /**
+     * Собирает в questionsInfo инфу про вопрос в формате List<Map<String, Map<String, ArrayList<String>>>>
      * (Тип вопроса (Формулирова, Список ответов (где правильные отметка (-true)))
+     *
      * @param inputXMLFile - входной файл moodleXML
+     * @return List<Map<String, Map<String, ArrayList<String>>>> <Тип вопроса, <Формулировка, ответы>>
      */
-    public static void collectXMLData(String inputXMLFile) {
+    public static List<Map<String, Map<String, ArrayList<String>>>> collectXMLData(String inputXMLFile) {
 
         List<Map<String, Map<String, ArrayList<String>>>> questionsInfo = new ArrayList<>(); // <Тип вопроса, <Формулировка, ответы>>
 
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         try {
-            DocumentBuilder builder = factory.newDocumentBuilder();
-
-            Document document = (Document) builder.parse(new File(inputXMLFile));
+            Document document = XMLParser.parse(inputXMLFile);
 
             document.getDocumentElement().normalize();
 
@@ -51,7 +42,7 @@ public class XMLParser {
                         if (detail.getNodeType() == Node.ELEMENT_NODE) {
                             Element detailElement = (Element) detail;
 
-                            if (Objects.equals(detailElement.getTagName(), "questiontext")) {
+                            if (detailElement.getTagName().equals("questiontext")) {
                                 if (detailElement.getNodeValue() != null) {
                                     questionText = detailElement.getNodeValue();
                                 }
@@ -61,8 +52,8 @@ public class XMLParser {
                             пока не пониманию точно, как должно выглядеть в DOCX и как выделить их тоже ососбо пока не разобрался,
                              особенно с перетаскиванием это КРИНЖ.
                             */
-                            if (Objects.equals(detailElement.getTagName(), "answer")) {
-                                if (detailElement.getNodeValue() != null) {
+                            if (detailElement.getTagName().equals("answer")) {
+                                if (detailElement.getNodeValue() != null) { // ПОЧЕМУ-ТО РАВНО null
                                     String isCorrect = String.valueOf((!detailElement.getAttribute("fraction").equals("0")));
                                     if (isCorrect.equals("true")) {
                                         answers.add(detailElement.getNodeValue() + isCorrect);
@@ -71,12 +62,12 @@ public class XMLParser {
                                     }
                                 }
                             }
-                            if (Objects.equals(detailElement.getTagName(), "dragbox")) {
-                                if (detailElement.getNodeValue() != null) {
+                            if (detailElement.getTagName().equals("dragbox")) {
+                                if (detailElement.getNodeValue() != null) { // ПОЧЕМУ-ТО РАВНО null
                                     answers.add(detailElement.getNodeValue());
                                 }
                             }
-                            if (Objects.equals(detailElement.getTagName(), "selectoption")) {
+                            if (detailElement.getTagName().equals("selectoption")) { // ПОЧЕМУ-ТО РАВНО null
                                 if (detailElement.getNodeValue() != null) {
                                     answers.add(detailElement.getNodeValue());
                                 }
@@ -84,19 +75,17 @@ public class XMLParser {
                         }
                     }
                     Map<String, Map<String, ArrayList<String>>> questions = new HashMap<>();
-                    questions.put(questionType,normalizeXMLData(questionType, answers, questionText));
+                    questions.put(questionType, normalizeXMLData(questionType, answers, questionText));
                     questionsInfo.add(questions);
                 }
             }
 
-        } catch (ParserConfigurationException e) {
-            e.printStackTrace();
-            throw new RuntimeException(e);
-
-        } catch (IOException | SAXException e) {
+        } catch (DOMException e) {
+            Window.alert("Could not parse XML document.");
             throw new RuntimeException(e);
         }
-        System.out.println(questionsInfo);
+
+        return questionsInfo;
     }
 
     /**
@@ -107,14 +96,15 @@ public class XMLParser {
      * @return Map<String, ArrayList<String>> - Нормализованные (формулировка, список ответов).
      */
     public static Map<String, ArrayList<String>> normalizeXMLData(String questionType, ArrayList<String> answers, String questionText) {
-        Map<String, ArrayList<String>> normalizedAnswers = new HashMap<String, ArrayList<String>>(){};
+       // Window.alert(questionText);
+        Map<String, ArrayList<String>> normalizedAnswers = new HashMap<>(){};
         String newQuestionText = questionText.replaceAll("<[^>]*>", "").trim(); //тупо все теги убирает, это тупо, но я пока ничего лучше не придумал В(
         ArrayList<String> newAnswers = new ArrayList<>();
         StringBuilder answer = new StringBuilder();
 
         System.out.println(newQuestionText);
 
-        if (!Objects.equals(questionType, "essay")) {
+        if (!questionType.equals("essay")) {
             for (int i = 0; i < answers.toArray().length; i++) {
 
                 String currentAnswer = answers.toArray()[i].toString().replaceAll("<[^>]*>", "").trim();
@@ -122,39 +112,38 @@ public class XMLParser {
                 for (int j = 0; j < splitted.length; j++) {
                     currentAnswer = splitted[j].trim();
                     if (!currentAnswer.equals("")) {
-                            if (Objects.equals(questionType, "multichoice") || Objects.equals(questionType,"shortanswer") ||  Objects.equals(questionType,"multichoiceset")) { //Множественный выбор, короткий ответ,
-                                if (j == 0) {
-                                    answer = new StringBuilder(currentAnswer);
-                                }
-                                if (j == 2) {
-                                    answer.append(" (Комментарий к вопросу при просмотре результата): ").append(currentAnswer);
-                                }
-                                if (j == splitted.length - 1 && splitted[splitted.length - 1].trim().equals("true") && !questionType.equals("shortanswer")) {
-                                    answer.append(" true");
-                                }
+                        if ((questionType.equals("multichoice")) || (questionType.equals("shortanswer")) || (questionType.equals("multichoiceset"))) { //Множественный выбор, короткий ответ,
+                            if (j == 0) {
+                                answer = new StringBuilder(currentAnswer);
                             }
-                            if (Objects.equals(questionType,"numerical")) { //Числовой
-                                if (j == 0) {
-                                    answer = new StringBuilder(currentAnswer);
-                                }
-                                if (j == 2) {
-                                    answer.append(" (Комментарий к вопросу при просмотре результата): ").append(currentAnswer);
-                                }
-                                if (j == 4) {
-                                    answer.append(" Допустимая погрешность = +-").append(currentAnswer);
-                                }
+                            if (j == 2) {
+                                answer.append(" (Комментарий к вопросу при просмотре результата): ").append(currentAnswer);
                             }
-                            if  (Objects.equals(questionType,"ddwtos") || Objects.equals(questionType,"gapselect")) { //Перетаскивание в текст и выбор пропущенных слов
-                                if (j == 0) {
-                                    answer = new StringBuilder(currentAnswer);
-                                }
-                                if (j == 1) {
-                                    answer.append(" (Группа ответа): ").append(currentAnswer);
-                                }
+                            if (j == splitted.length - 1 && splitted[splitted.length - 1].trim().equals("true") && !questionType.equals("shortanswer")) {
+                                answer.append(" true");
                             }
+                        }
+                        if (questionType.equals("numerical")) { //Числовой
+                            if (j == 0) {
+                                answer = new StringBuilder(currentAnswer);
+                            }
+                            if (j == 2) {
+                                answer.append(" (Комментарий к вопросу при просмотре результата): ").append(currentAnswer);
+                            }
+                            if (j == 4) {
+                                answer.append(" Допустимая погрешность = +-").append(currentAnswer);
+                            }
+                        }
+                        if  ((questionType.equals("ddwtos")) || (questionType.equals("gapselect"))) { //Перетаскивание в текст и выбор пропущенных слов
+                            if (j == 0) {
+                                answer = new StringBuilder(currentAnswer);
+                            }
+                            if (j == 1) {
+                                answer.append(" (Группа ответа): ").append(currentAnswer);
+                            }
+                        }
                     }
                 }
-                System.out.println(answer);
                 newAnswers.add(answer.toString());
                 normalizedAnswers.put(newQuestionText, newAnswers);
             }
@@ -164,4 +153,3 @@ public class XMLParser {
         return normalizedAnswers;
     }
 }
-

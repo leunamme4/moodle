@@ -14,6 +14,7 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
+import com.moodle.parser.XMLConvertor;
 import org.vectomatic.file.*;
 import org.vectomatic.file.events.ErrorEvent;
 import org.vectomatic.file.events.ErrorHandler;
@@ -33,7 +34,7 @@ public class app implements EntryPoint {
    * This is the entry point method.
    */
 
-  private static final String PATH = "src/main/resources/moodleXML/example-1.xml";
+  public static final StringBuilder moodleText = new StringBuilder();
   @UiField
   FileUploadExt fileUpload;
   @UiField
@@ -90,8 +91,10 @@ public class app implements EntryPoint {
               //imagePanel.add(createThumbnail(file));
               GWT.log("onLoadEnd");
               //Вывод текста файла
-              GWT.log(reader.getStringResult());
+              moodleText.append(reader.getStringResult());
             } finally {
+              GWT.log(reader.getStringResult());
+              Window.alert(XMLConvertor.collectXMLData(moodleText.toString()).toString());
               readQueue.remove(0);
               readNextFile();
             }
