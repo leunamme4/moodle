@@ -4,21 +4,17 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.xml.client.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class XMLConvertor {
 
     /**
      * Собирает в questionsInfo инфу про вопрос в формате List<Map<String, Map<String, ArrayList<String>>>>
-     * (Тип вопроса (Формулирова, Список ответов (где правильные отметка (-true)))
+     * (Тип вопроса (Формулирова, Список ответов (где правильные отметка (-- Правильный ответ)))
      *
      * @param inputXMLFile - входной файл moodleXML
-     * @return List<Map<String, Map<String, ArrayList<String>>>> <Тип вопроса, <Формулировка, ответы>>
      */
-    public static List<Map<String, Map<String, ArrayList<String>>>> collectXMLData(String inputXMLFile) {
+    public static void collectXMLData(String inputXMLFile) {
 
         List<Map<String, Map<String, ArrayList<String>>>> questionsInfo = new ArrayList<>(); // <Тип вопроса, <Формулировка, ответы>>
 
@@ -67,7 +63,7 @@ public class XMLConvertor {
                                                 if (detailElement.getTagName().equals("answer")) {
                                                     boolean isCorrect = !detailElement.getAttribute("fraction").equals("0");
                                                     if (isCorrect) {
-                                                        answers.add(currentText + " true");
+                                                        answers.add(currentText + " - Правильный ответ");
                                                     } else {
                                                         answers.add(currentText);
                                                     }
@@ -92,7 +88,6 @@ public class XMLConvertor {
             throw new RuntimeException(e);
         }
         Window.alert(questionsInfo.toString());
-        return questionsInfo;
     }
 
     /**
@@ -107,6 +102,7 @@ public class XMLConvertor {
         ArrayList<String> newAnswers = new ArrayList<>();
         StringBuilder answer = new StringBuilder();
         String newQuestionText = questionText;
+        int count = 0;
         if (newQuestionText.endsWith("]]>")) {
             newQuestionText = newQuestionText.substring(0, newQuestionText.length() - 3);
         }
@@ -117,9 +113,28 @@ public class XMLConvertor {
                 String currentAnswer = answers.toArray()[i].toString().replaceAll("<[^>]*>", "").trim();
                 String[] splitAnswer = (currentAnswer.split("\n"));
                 for (String s : splitAnswer) {
+                    count ++;
                     currentAnswer = s.trim();
                     if (!currentAnswer.equals("")) {
                         answer = new StringBuilder(currentAnswer);
+                    }
+                }
+                if (questionType.equals("gapselect")) {
+                    String[] string =(newQuestionText.split(""));
+                    for (int j = 0; j <= string.length; j ++) {
+                        int index = -1;
+                        if (string[j].equals("[") && string[j + 1] != null && string[j + 1].equals("[") && string[j + 3] != null && string[j + 3].equals("]")
+                        && string[j + 4] != null && string[j + 4].equals("]")) {
+                            try {
+                                index = Integer.parseInt(string[j + 2]);
+                            }
+                            catch (NumberFormatException e) {
+                            }
+                            if (index > -1 && count == index) {
+                                answer = new StringBuilder(currentAnswer + " - Правильный ответ");
+                            }
+                            break;
+                        }
                     }
                 }
                 newAnswers.add(answer.toString());
@@ -128,7 +143,7 @@ public class XMLConvertor {
         } else {
             normalizedAnswers.put(newQuestionText, answers);
         }
-        GWT.log("Вопрос: " + newQuestionText + "\nОтветы:" + answers);
+        GWT.log("Вопрос: " + newQuestionText + "\nОтветы:" + newAnswers);
         return normalizedAnswers;
     }
 }
