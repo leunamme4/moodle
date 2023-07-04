@@ -92,9 +92,10 @@ public class app implements EntryPoint {
               GWT.log("onLoadEnd");
               //Вывод текста файла
               moodleText.append(reader.getStringResult());
+              //GWT.log(reader.getStringResult());
             } finally {
-              GWT.log(reader.getStringResult());
-              Window.alert(XMLConvertor.collectXMLData(moodleText.toString()).toString());
+              XMLConvertor.collectXMLData(String.valueOf(moodleText));
+           //   GWT.log(moodleText.toString());
               readQueue.remove(0);
               readNextFile();
             }

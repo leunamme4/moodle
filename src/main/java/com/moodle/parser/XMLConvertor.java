@@ -1,9 +1,13 @@
 package com.moodle.parser;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.xml.client.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class XMLConvertor {
 
@@ -43,33 +47,36 @@ public class XMLConvertor {
                             Element detailElement = (Element) detail;
 
                             if (detailElement.getTagName().equals("questiontext")) {
-                                if (detailElement.getNodeValue() != null) {
-                                    questionText = detailElement.getNodeValue();
-                                }
+                                questionText = detailElement.getChildNodes().item(1).toString().replaceAll("<[^>]*>", "").trim();
                             }
 
                             /* Правильные ответы выделяю для мультивыбора и вставить пропущенное слово, остальное
                             пока не пониманию точно, как должно выглядеть в DOCX и как выделить их тоже ососбо пока не разобрался,
                              особенно с перетаскиванием это КРИНЖ.
                             */
-                            if (detailElement.getTagName().equals("answer")) {
-                                if (detailElement.getNodeValue() != null) { // ПОЧЕМУ-ТО РАВНО null
-                                    String isCorrect = String.valueOf((!detailElement.getAttribute("fraction").equals("0")));
-                                    if (isCorrect.equals("true")) {
-                                        answers.add(detailElement.getNodeValue() + isCorrect);
-                                    } else {
-                                        answers.add(detailElement.getNodeValue());
+                            if (detailElement.getTagName().equals("answer") || detailElement.getTagName().equals("dragbox") ||
+                                    detailElement.getTagName().equals("selectoption")) {
+                                for (int k = 0; k <= detailElement.getChildNodes().getLength(); k++) {
+                                    if (detailElement.getChildNodes().item(k) != null) {
+                                        String currentText = detailElement.getChildNodes().item(k).toString().replaceAll("<[^>]*>", "").trim();
+                                        if (!currentText.equals("")) {
+                                            if (k == 1) {
+                                                if (currentText.endsWith("]]>")) {
+                                                    currentText = currentText.substring(0, currentText.length() - 3).trim();
+                                                }
+                                                if (detailElement.getTagName().equals("answer")) {
+                                                    boolean isCorrect = !detailElement.getAttribute("fraction").equals("0");
+                                                    if (isCorrect) {
+                                                        answers.add(currentText + " true");
+                                                    } else {
+                                                        answers.add(currentText);
+                                                    }
+                                                } else {
+                                                    answers.add(currentText);
+                                                }
+                                            }
+                                        }
                                     }
-                                }
-                            }
-                            if (detailElement.getTagName().equals("dragbox")) {
-                                if (detailElement.getNodeValue() != null) { // ПОЧЕМУ-ТО РАВНО null
-                                    answers.add(detailElement.getNodeValue());
-                                }
-                            }
-                            if (detailElement.getTagName().equals("selectoption")) { // ПОЧЕМУ-ТО РАВНО null
-                                if (detailElement.getNodeValue() != null) {
-                                    answers.add(detailElement.getNodeValue());
                                 }
                             }
                         }
@@ -84,7 +91,7 @@ public class XMLConvertor {
             Window.alert("Could not parse XML document.");
             throw new RuntimeException(e);
         }
-
+        Window.alert(questionsInfo.toString());
         return questionsInfo;
     }
 
@@ -96,52 +103,23 @@ public class XMLConvertor {
      * @return Map<String, ArrayList<String>> - Нормализованные (формулировка, список ответов).
      */
     public static Map<String, ArrayList<String>> normalizeXMLData(String questionType, ArrayList<String> answers, String questionText) {
-       // Window.alert(questionText);
         Map<String, ArrayList<String>> normalizedAnswers = new HashMap<>(){};
-        String newQuestionText = questionText.replaceAll("<[^>]*>", "").trim(); //тупо все теги убирает, это тупо, но я пока ничего лучше не придумал В(
         ArrayList<String> newAnswers = new ArrayList<>();
         StringBuilder answer = new StringBuilder();
-
-        System.out.println(newQuestionText);
+        String newQuestionText = questionText;
+        if (newQuestionText.endsWith("]]>")) {
+            newQuestionText = newQuestionText.substring(0, newQuestionText.length() - 3);
+        }
 
         if (!questionType.equals("essay")) {
             for (int i = 0; i < answers.toArray().length; i++) {
 
                 String currentAnswer = answers.toArray()[i].toString().replaceAll("<[^>]*>", "").trim();
-                String[] splitted = (currentAnswer.split("\n"));
-                for (int j = 0; j < splitted.length; j++) {
-                    currentAnswer = splitted[j].trim();
+                String[] splitAnswer = (currentAnswer.split("\n"));
+                for (String s : splitAnswer) {
+                    currentAnswer = s.trim();
                     if (!currentAnswer.equals("")) {
-                        if ((questionType.equals("multichoice")) || (questionType.equals("shortanswer")) || (questionType.equals("multichoiceset"))) { //Множественный выбор, короткий ответ,
-                            if (j == 0) {
-                                answer = new StringBuilder(currentAnswer);
-                            }
-                            if (j == 2) {
-                                answer.append(" (Комментарий к вопросу при просмотре результата): ").append(currentAnswer);
-                            }
-                            if (j == splitted.length - 1 && splitted[splitted.length - 1].trim().equals("true") && !questionType.equals("shortanswer")) {
-                                answer.append(" true");
-                            }
-                        }
-                        if (questionType.equals("numerical")) { //Числовой
-                            if (j == 0) {
-                                answer = new StringBuilder(currentAnswer);
-                            }
-                            if (j == 2) {
-                                answer.append(" (Комментарий к вопросу при просмотре результата): ").append(currentAnswer);
-                            }
-                            if (j == 4) {
-                                answer.append(" Допустимая погрешность = +-").append(currentAnswer);
-                            }
-                        }
-                        if  ((questionType.equals("ddwtos")) || (questionType.equals("gapselect"))) { //Перетаскивание в текст и выбор пропущенных слов
-                            if (j == 0) {
-                                answer = new StringBuilder(currentAnswer);
-                            }
-                            if (j == 1) {
-                                answer.append(" (Группа ответа): ").append(currentAnswer);
-                            }
-                        }
+                        answer = new StringBuilder(currentAnswer);
                     }
                 }
                 newAnswers.add(answer.toString());
@@ -150,6 +128,7 @@ public class XMLConvertor {
         } else {
             normalizedAnswers.put(newQuestionText, answers);
         }
+        GWT.log("Вопрос: " + newQuestionText + "\nОтветы:" + answers);
         return normalizedAnswers;
     }
 }
