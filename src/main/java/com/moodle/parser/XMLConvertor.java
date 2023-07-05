@@ -13,8 +13,9 @@ public class XMLConvertor {
      * (Тип вопроса (Формулирова, Список ответов (где правильные отметка (-- Правильный ответ)))
      *
      * @param inputXMLFile - входной файл moodleXML
+     * @return
      */
-    public static void collectXMLData(String inputXMLFile) {
+    public static List<Map<String, Map<String, ArrayList<String>>>> collectXMLData(String inputXMLFile) {
 
         List<Map<String, Map<String, ArrayList<String>>>> questionsInfo = new ArrayList<>(); // <Тип вопроса, <Формулировка, ответы>>
 
@@ -88,6 +89,7 @@ public class XMLConvertor {
             throw new RuntimeException(e);
         }
         Window.alert(questionsInfo.toString());
+        return questionsInfo;
     }
 
     /**
